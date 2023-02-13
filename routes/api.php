@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\LibroController;
+use App\Http\Controllers\AutorController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 

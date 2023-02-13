@@ -11,8 +11,8 @@ class Libro extends Model
 
     protected $fillable = ['titulo', 'autor', 'anio', 'pais', 'idioma'];
 
-    public function libros()
+    public function autor()
     {
-        return $this->hasMany(Libro::class);
+        return $this->belongsTo(Autor::class);
     }
 }
