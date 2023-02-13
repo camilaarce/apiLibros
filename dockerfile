@@ -1,34 +1,34 @@
-FROM php:7.3-fpm
+FROM php:7.4-apache
 
-# Arguments defined in docker-compose.yml
-ARG user
-ARG uid
+RUN a2enmod rewrite
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpng-dev \
-    libonig-dev \
+    zlib1g-dev \
+    libicu-dev \
     libxml2-dev \
-    zip \
-    unzip
+    libpq-dev \
+    libzip-dev \
+    && docker-php-ext-install pdo pdo_mysql zip intl xmlrpc soap opcache \
+    && docker-php-ext-configure pdo_mysql --with-pdo-mysql=mysqlnd
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+RUN apt-get update -y 
 
-# Get latest Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Add Node 8 LTS
+RUN curl -sL https://deb.nodesource.com/setup_8.x | bash -- \
+    && apt-get install -y nodejs \
+    && apt-get autoremove -y
 
-# Create system user to run Composer and Artisan Commands
-RUN useradd -G www-data,root -u $uid -d /home/$user $user
-RUN mkdir -p /home/$user/.composer && \
-    chown -R $user:$user /home/$user
+COPY --from=composer /usr/bin/composer /usr/bin/composer
 
-# Set working directory
-WORKDIR /var/www
+COPY  docker/000-default.conf /etc/apache2/sites-available/000-default.conf
+COPY  docker/.env-pro /var/www/html/.env
+COPY  docker/php.ini /usr/local/etc/php/php.ini
 
-USER $user
+ENV COMPOSER_ALLOW_SUPERUSER 1
+
+COPY  . /var/www/html/
+WORKDIR /var/www/html/
+
+RUN chown -R www-data:www-data /var/www/html  \
+    && composer install  && composer dumpautoload 
